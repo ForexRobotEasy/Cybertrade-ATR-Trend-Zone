@@ -1,0 +1,67 @@
+mql5
+//+------------------------------------------------------------------+
+//|                                              Cybertrade ATR Trend Zone |
+//|                                                 Developer: forexroboteasy.com |
+//+------------------------------------------------------------------+
+
+// Define input parameters
+input int period = 14; // ATR period
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+    //--- indicator buffers mapping
+    SetIndexBuffer(0, atr_buffer, INDICATOR_DATA);
+    SetIndexStyle(0, DRAW_LINE);
+
+    //--- set up indicator label
+    IndicatorSetString(INDICATOR_SHORTNAME, 'Cybertrade ATR Trend Zone');
+
+    //--- initialization done
+    return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int OnCalculate(const int rates_total,
+                const int prev_calculated,
+                const datetime &time[],
+                const double &open[],
+                const double &high[],
+                const double &low[],
+                const double &close[],
+                const long &tick_volume[],
+                const long &volume[],
+                const int &spread[])
+{
+    //--- calculate ATR values
+    ArraySetAsSeries(atr_buffer, true);
+    if (bars < period)
+        return 0;
+    
+    for (int i = prev_calculated; i < rates_total; i++)
+    {
+        double atr_value = iATR(_Symbol, _Period, period, i);
+        atr_buffer[i] = atr_value;
+    }
+    
+    //--- determine trend direction
+    double previous_atr = atr_buffer[prev_calculated];
+    double current_atr = atr_buffer[rates_total - 1];
+    
+    string trend_direction;
+    if (current_atr > previous_atr)
+        trend_direction = 'Upward';
+    else if (current_atr < previous_atr)
+        trend_direction = 'Downward';
+    else
+        trend_direction = 'Ranging';
+    
+    //--- print trend direction on the chart
+    Comment('Trend Direction: ', trend_direction);
+    
+    return(rates_total);
+}
